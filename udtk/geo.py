@@ -10,8 +10,15 @@ from shapely.geometry import Polygon
 def shapely_from_h3(h3_index):
     return Polygon([[i[1], i[0]] for i in h3.h3_to_geo_boundary(h3_index)])
 
-# we can split this function for loading csv or shape and turn into a table with x and y cols
-# the use a single function to turn this table into hexgrid
+
+def h3_from_row(row, res):
+    return h3.geo_to_h3(row['y'], row['x'], res=res)
+
+
+def h3_df_to_gdf(df, h3_index_col):
+    geoms = df[h3_index_col].map(shapely_from_h3)
+    gdf = gpd.GeoDataFrame(df, geometry=geoms, crs={'init': 'epsg:4326', 'no_defs': True})
+    return gdf
 
 
 def hexgrid_from_shapefile(input_shapefile, output_shapefile, res):
@@ -41,3 +48,33 @@ def weights_matrix(grid_id_name, input_shapefile='carto/grid/grid.shp', output_p
     with open(output_pickle, 'wb') as handle:
         pickle.dump(w, handle)
     return w
+
+
+def h3_indexing(df, res):
+    """
+    This function takes a table with point coordinates in latlong
+    and returns the same table with h3 indexes
+
+    Parameters:
+    dt (pandas.DataFrame):
+        Table with point coordinates in latlong stored in x and y
+    res (list):
+        List containing range of h3 resolutions from 0 to 15.
+        Allows a single resolution level res = [5].
+    Returns:
+    dt:Table with h3 indexes for all resolutions
+    """
+    if len(res) == 1:
+        res.append(res[0])
+
+    for i in res:
+        df['h3_res_' + str(i)] = df.apply(h3_from_row, axis=1, args=[i])
+
+    return df
+
+
+def aggregate_data(df, aggregation_col, aggregation_dict):
+    agg_df = df.reindex(columns=[aggregation_col] + list(aggregation_dict.keys())) \
+        .groupby(aggregation_col).agg(aggregation_dict).reset_index()
+    h3_gdf = h3_df_to_gdf(df=agg_df, h3_index_col=aggregation_col)
+    return h3_gdf
