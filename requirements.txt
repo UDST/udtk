@@ -1,3 +1,4 @@
+contextily
 descartes==1.1.0
 geopandas==0.6.0
 h3==3.4.3
