@@ -14,3 +14,4 @@ def plot_h3_gdf(h3_gdf, plot_column):
     f, ax = plt.subplots(figsize=(8, 8))
     h3_gdf.to_crs(epsg=3857).plot(ax=ax, column=plot_column, scheme='Quantiles')
     add_basemap(ax, zoom=12, url=ctx.sources.ST_TONER_LITE)
+    ax.set_axis_off()
