@@ -28,26 +28,33 @@ def hexgrid_from_shapefile(input_shapefile, res, output_shapefile=False):
     carto = carto.to_crs(epsg=4326)
     carto['y'] = carto.geometry.y
     carto['x'] = carto.geometry.x
-    carto['h3_index'] = carto.apply(lambda geom: h3.geo_to_h3(geom.y, geom.x, res), axis=1)
-    carto = carto.groupby('h3_index').size().to_frame('n').reset_index()
+
+    # produce h3 indexis for each parcel
+    carto = h3_indexing(carto, res=[res])
+
+    # group by h3 index and get count of parcels within each cell
+    carto = carto.groupby('h3_res_%i' % res).size().to_frame('n').reset_index()
 
     # create shapefile
-    geoms = carto['h3_index'].map(shapely_from_h3)
-    carto = gpd.GeoDataFrame(carto, geometry=geoms, crs={'init': 'epsg:4326', 'no_defs': True})
+    carto = h3_df_to_gdf(df=carto, h3_index_col='h3_res_%i' % res)
+
     carto = carto.to_crs({'init': 'epsg:3857', 'no_defs': True})
+
     if output_shapefile:
         carto.to_file(output_shapefile)
+
     return carto
 
 
-def weights_matrix(grid_id_name, input_shapefile='carto/grid/grid.shp', output_pickle='data/w.pickle'):
+def weights_matrix(grid_id_name, input_shapefile='carto/grid/grid.shp', output_pickle=False):
     # produce weights matrix
     w = ps.lib.weights.Queen.from_shapefile(
         input_shapefile, idVariable=grid_id_name)
 
     # save data
-    with open(output_pickle, 'wb') as handle:
-        pickle.dump(w, handle)
+    if output_pickle:
+        with open(output_pickle, 'wb') as handle:
+            pickle.dump(w, handle)
     return w
 
 
@@ -74,7 +81,7 @@ def h3_indexing(df, res, x_col='x', y_col='y'):
     return df
 
 
-def aggregate_data(df, aggregation_col, aggregation_dict):
+def aggregate_h3(df, aggregation_col, aggregation_dict):
     agg_df = df.reindex(columns=[aggregation_col] + list(aggregation_dict.keys())) \
         .groupby(aggregation_col).agg(aggregation_dict).reset_index()
     h3_gdf = h3_df_to_gdf(df=agg_df, h3_index_col=aggregation_col)
