@@ -11,8 +11,8 @@ def shapely_from_h3(h3_index):
     return Polygon([[i[1], i[0]] for i in h3.h3_to_geo_boundary(h3_index)])
 
 
-def h3_from_row(row, res):
-    return h3.geo_to_h3(row['y'], row['x'], res=res)
+def h3_from_row(row, res, x_col, y_col):
+    return h3.geo_to_h3(row[y_col], row[x_col], res=res)
 
 
 def h3_df_to_gdf(df, h3_index_col):
@@ -50,7 +50,7 @@ def weights_matrix(grid_id_name, input_shapefile='carto/grid/grid.shp', output_p
     return w
 
 
-def h3_indexing(df, res):
+def h3_indexing(df, res, x_col='x', y_col='y'):
     """
     This function takes a table with point coordinates in latlong
     and returns the same table with h3 indexes
@@ -68,7 +68,7 @@ def h3_indexing(df, res):
         res.append(res[0])
 
     for i in res:
-        df['h3_res_' + str(i)] = df.apply(h3_from_row, axis=1, args=[i])
+        df['h3_res_' + str(i)] = df.apply(h3_from_row, axis=1, args=[i, x_col, y_col])
 
     return df
 
