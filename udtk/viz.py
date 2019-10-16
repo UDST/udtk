@@ -10,8 +10,8 @@ def add_basemap(ax, zoom, url='http://tile.stamen.com/terrain/tileZ/tileX/tileY.
     ax.axis((xmin, xmax, ymin, ymax))
 
 
-def plot_h3_gdf(h3_gdf, plot_column):
+def plot_h3_gdf(h3_gdf, plot_column, scheme, k):
     f, ax = plt.subplots(figsize=(8, 8))
-    h3_gdf.to_crs(epsg=3857).plot(ax=ax, column=plot_column, scheme='Quantiles')
+    h3_gdf.to_crs(epsg=3857).plot(ax=ax, column=plot_column, scheme=scheme, k=k)
     add_basemap(ax, zoom=12, url=ctx.sources.ST_TONER_LITE)
     ax.set_axis_off()
