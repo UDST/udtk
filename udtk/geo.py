@@ -21,7 +21,7 @@ def h3_df_to_gdf(df, h3_index_col):
     return gdf
 
 
-def hexgrid_from_shapefile(input_shapefile, output_shapefile, res):
+def hexgrid_from_shapefile(input_shapefile, res, output_shapefile=False):
     carto = gpd.read_file(input_shapefile)
 
     # make changes to get h3 grid
@@ -35,7 +35,8 @@ def hexgrid_from_shapefile(input_shapefile, output_shapefile, res):
     geoms = carto['h3_index'].map(shapely_from_h3)
     carto = gpd.GeoDataFrame(carto, geometry=geoms, crs={'init': 'epsg:4326', 'no_defs': True})
     carto = carto.to_crs({'init': 'epsg:3857', 'no_defs': True})
-    carto.to_file(output_shapefile)
+    if output_shapefile:
+        carto.to_file(output_shapefile)
     return carto
 
 
