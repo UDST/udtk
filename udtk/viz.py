@@ -1,5 +1,7 @@
 import contextily as ctx
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+
 import geopandas as gpd
 import json
 import plotly.graph_objects as go
@@ -30,3 +32,22 @@ def plotly_viz(gdf, plot_column, zmax=3000):
                       mapbox_center={"lat": 40.7731607, "lon": -73.9752436})
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     return fig
+
+
+def plot_lisa(gdf):
+    colors5_mpl = {'HH': '#d7191c',
+                   'LL': '#2c7bb6',
+                   'LH': '#abd9e9',
+                   'HL': '#fdae61',
+                   'Non-significant': 'lightgrey'}
+    gdf = gdf.loc[gdf.lisa_cluster != 'Non-significant', :]
+    unique_cluster = gdf.lisa_cluster.unique()
+    unique_cluster.sort()
+    hmap = ListedColormap([colors5_mpl[i] for i in unique_cluster])
+    f, ax = plt.subplots(figsize=(8, 8))
+
+    gdf.to_crs(epsg=3857).plot(ax=ax, column='lisa_cluster', legend=True, categorical=True,
+                               k=2, cmap=hmap, linewidth=0.1,
+                               edgecolor='white')
+    add_basemap(ax, zoom=12, url=ctx.sources.ST_TONER_LITE)
+    ax.set_axis_off()

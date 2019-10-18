@@ -1,5 +1,3 @@
-
-import yaml
 import pickle
 import json
 
@@ -18,7 +16,13 @@ from pysal.viz.splot.esda import lisa_cluster
 from sklearn.cluster import DBSCAN
 
 
-def get_lisa(path, indicator, w, grid_id):
+def read_w_from_pickle(path):
+    with open(path, 'rb') as w_file:
+        w = pickle.load(w_file)
+    return w
+
+
+def get_lisa_legacy(path, indicator, w, grid_id):
     '''
     This function takes a year and a variable
     and returns the all the quadrants for local moran analysis
@@ -40,6 +44,33 @@ def get_lisa(path, indicator, w, grid_id):
             'value': moran.I,
             'significance': moran.p_sim,
             'local': moran_loc}
+
+
+def get_lisa(gdf, indicator, w):
+    '''
+    This function takes a year and a variable
+    and returns the all the quadrants for local moran analysis
+    ...
+    Args:
+
+    '''
+    gdf = gdf.copy()
+    quadrant_labels = {1: 'HH',
+                       2: 'HL',
+                       3: 'LL',
+                       4: 'LH'
+                       }
+
+    moran = Moran(gdf[indicator].values, w)
+    moran_loc = Moran_Local(gdf[indicator].values, w, transformation="r")
+
+    significant = pd.Series(moran_loc.p_sim < 0.05)
+    quadrant = pd.Series(moran_loc.q)
+    quadrant = quadrant.replace(quadrant_labels)
+    quadrant[~significant] = 'Non-significant'
+
+    gdf['lisa_cluster'] = quadrant
+    return gdf
 
 
 def select_quadrant(gdf, qval, significant=True):
