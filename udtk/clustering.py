@@ -100,19 +100,20 @@ def cluster_labels(eps, min_samples, quadrant_array):
     return clustering_quadrant.labels_
 
 
-def get_dbscan(gdf, distance, nbours):
+def get_dbscan(gdf, quadrant, distance, nbours):
     '''
     This function returns the DBSCAN computed cluster label for high-high & low-low
     quadrants.
     ...
-    gdf(geodataframe): fgd with a 'lisa_cluster' label that indicates the quadrant of each grid.
+    gdf(gdf): geodataframe with a 'lisa_cluster' Series label that indicates the quadrant of each grid.
+    quadrant(str): name of the lisa quadrant (HH or LL).
     distance(float): the amount of kms per radian. Ej:0.5 represents a radius of 500mts.
     nbours(int): the amount of neighbours to be computed in min_samples parameter.
 
     '''
 
     # high-high & low-low quadrants
-    quadrants = gdf.loc[(gdf['lisa_cluster'] == 'HH') | (gdf['lisa_cluster'] == 'LL')]
+    quadrants = gdf.loc[(gdf['lisa_cluster'] == quadrant)]
     # gdf coordinates
     list_q = list(quadrants.centroid.map(lambda g: [g.x, g.y]))
 
