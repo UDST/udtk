@@ -65,6 +65,27 @@ def plotly_lisa(gdf):
     return fig
 
 
+def plot_dbscan(gdf):
+
+    gdf = gdf.to_crs(epsg=3857)
+    hh = gdf.loc[gdf.lisa_cluster == 'HH', :].copy()
+    hh['hh_k'] = hh.k_order.map(lambda x: int(x.split('_')[1]))
+
+    ll = gdf.loc[gdf.lisa_cluster == 'LL', :].copy()
+    ll['ll_k'] = ll.k_order.map(lambda x: int(x.split('_')[1]))
+    f, ax = plt.subplots(figsize=(8, 8))
+
+    hh.plot(ax=ax, column='hh_k', legend=False,
+            cmap='Reds', linewidth=0.1,
+            edgecolor='white')
+    ll.plot(ax=ax, column='ll_k', legend=False,
+            cmap='Blues_r', linewidth=0.1,
+            edgecolor='white')
+
+    add_basemap(ax, zoom=12, url=ctx.sources.ST_TONER_LITE)
+    ax.set_axis_off()
+
+
 def plot_lisa(gdf):
     colors5_mpl = {'HH': '#d7191c',
                    'LL': '#2c7bb6',

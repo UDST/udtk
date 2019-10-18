@@ -125,7 +125,7 @@ def get_dbscan(gdf, indicator, aggregation_dict, distance, nbours):
     k_order_hh = hh.reindex(columns=['k'] + list(aggregation_dict.keys())) \
         .groupby('k').agg(aggregation_dict).reset_index().sort_values(by=indicator, ascending=True)
     hh_label = [i for i in k_order_hh.k]
-    hh_order = ['hh_'+str(i) for i in range(len(k_order_hh['k']))]
+    hh_order = ['hh_' + str(i) for i in range(len(k_order_hh['k']))]
     hh['k_order'] = hh['k'].map(dict(zip(hh_label, hh_order)))
 
     # low-low
@@ -137,7 +137,7 @@ def get_dbscan(gdf, indicator, aggregation_dict, distance, nbours):
     k_order_ll = ll.reindex(columns=['k'] + list(aggregation_dict.keys())) \
         .groupby('k').agg(aggregation_dict).reset_index().sort_values(by=indicator, ascending=True)
     ll_label = [i for i in k_order_ll.k]
-    ll_order = ['ll_'+str(i) for i in range(len(k_order_ll['k']))]
+    ll_order = ['ll_' + str(i) for i in range(len(k_order_ll['k']))]
     ll['k_order'] = ll['k'].map(dict(zip(ll_label, ll_order)))
 
     quadrants = hh.append(ll)
