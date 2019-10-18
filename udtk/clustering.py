@@ -100,31 +100,40 @@ def cluster_labels(eps, min_samples, quadrant_array):
     return clustering_quadrant.labels_
 
 
-def get_dbscan(gdf, quadrant, distance, nbours):
+def get_dbscan(gdf, indicator, distance, nbours):
     '''
     This function returns the DBSCAN computed cluster label for high-high & low-low
     quadrants.
     ...
     gdf(gdf): geodataframe with a 'lisa_cluster' Series label that indicates the quadrant of each grid.
-    quadrant(str): name of the lisa quadrant (HH or LL).
+    indicator (str): name of the indicator clustering.
     distance(float): the amount of kms per radian. Ej:0.5 represents a radius of 500mts.
     nbours(int): the amount of neighbours to be computed in min_samples parameter.
-
     '''
 
-    # high-high or low-low quadrants
-    quadrants = gdf.copy().loc[(gdf.copy()['lisa_cluster'] == quadrant)]
-    # gdf coordinates
-    list_q = list(quadrants.centroid.map(lambda g: [g.x, g.y]))
-
+    # dbscan
     kms_per_radian = 6371.0088
     eps_val = distance / kms_per_radian
 
-    clustering_quadrant = DBSCAN(eps=eps_val, min_samples=nbours).fit(list_q)
+    # high-high
+    hh = gdf.copy().loc[(gdf['lisa_cluster'] == 'HH')]
+    hh_coord = list(hh.centroid.map(lambda g: [g.x, g.y]))
+    clustering_hh = DBSCAN(eps=eps_val, min_samples=nbours).fit(hh_coord)
+    hh['k'] = clustering_hh.labels_
+    hh_values = hh[indicator].sort_values(ascending=True)
+    hh_order = ['hh_'+str(i) for i in range(len(hh_values))]
+    hh['k_order'] = hh[indicator].map(dict(zip(hh_values, hh_order)))
 
-    labels = clustering_quadrant.labels_
+    # low-low
+    ll = gdf.copy().loc[(gdf['lisa_cluster'] == 'LL')]
+    ll_coord = list(ll.centroid.map(lambda g: [g.x, g.y]))
+    clustering_ll = DBSCAN(eps=eps_val, min_samples=nbours).fit(ll_coord)
+    ll['k'] = clustering_ll.labels_
+    ll_values = ll[indicator].sort_values(ascending=True)
+    ll_order = ['ll_'+str(i) for i in range(len(ll_values))]
+    ll['k_order'] = ll[indicator].map(dict(zip(ll_values, ll_order)))
 
-    quadrants['k'] = labels
+    quadrants = hh.append(ll)
 
     return quadrants
 
