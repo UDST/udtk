@@ -112,8 +112,8 @@ def get_dbscan(gdf, quadrant, distance, nbours):
 
     '''
 
-    # high-high & low-low quadrants
-    quadrants = gdf.loc[(gdf['lisa_cluster'] == quadrant)]
+    # high-high or low-low quadrants
+    quadrants = gdf.copy().loc[(gdf.copy()['lisa_cluster'] == quadrant)]
     # gdf coordinates
     list_q = list(quadrants.centroid.map(lambda g: [g.x, g.y]))
 
@@ -124,7 +124,9 @@ def get_dbscan(gdf, quadrant, distance, nbours):
 
     labels = clustering_quadrant.labels_
 
-    return labels
+    quadrants['k'] = labels
+
+    return quadrants
 
 
 def make_convex_cluster(geodt, grid_id, nbour):
