@@ -100,13 +100,14 @@ def cluster_labels(eps, min_samples, quadrant_array):
     return clustering_quadrant.labels_
 
 
-def get_dbscan(gdf, indicator, distance, nbours):
+def get_dbscan(gdf, indicator, aggregation_dict, distance, nbours):
     '''
     This function returns the DBSCAN computed cluster label for high-high & low-low
     quadrants.
     ...
     gdf(gdf): geodataframe with a 'lisa_cluster' Series label that indicates the quadrant of each grid.
     indicator (str): name of the indicator clustering.
+    aggregation_dict (dict): dictionary with column names as keys and method of agreggation as values
     distance(float): the amount of kms per radian. Ej:0.5 represents a radius of 500mts.
     nbours(int): the amount of neighbours to be computed in min_samples parameter.
     '''
@@ -120,18 +121,24 @@ def get_dbscan(gdf, indicator, distance, nbours):
     hh_coord = list(hh.centroid.map(lambda g: [g.x, g.y]))
     clustering_hh = DBSCAN(eps=eps_val, min_samples=nbours).fit(hh_coord)
     hh['k'] = clustering_hh.labels_
-    hh_values = hh[indicator].sort_values(ascending=True)
-    hh_order = ['hh_'+str(i) for i in range(len(hh_values))]
-    hh['k_order'] = hh[indicator].map(dict(zip(hh_values, hh_order)))
+    hh = hh.loc[hh.k >= 0, :]
+    k_order_hh = hh.reindex(columns=['k'] + list(aggregation_dict.keys())) \
+        .groupby('k').agg(aggregation_dict).reset_index().sort_values(by=indicator, ascending=True)
+    hh_label = [i for i in k_order_hh.k]
+    hh_order = ['hh_'+str(i) for i in range(len(k_order_hh['k']))]
+    hh['k_order'] = hh['k'].map(dict(zip(hh_label, hh_order)))
 
     # low-low
     ll = gdf.copy().loc[(gdf['lisa_cluster'] == 'LL')]
     ll_coord = list(ll.centroid.map(lambda g: [g.x, g.y]))
     clustering_ll = DBSCAN(eps=eps_val, min_samples=nbours).fit(ll_coord)
     ll['k'] = clustering_ll.labels_
-    ll_values = ll[indicator].sort_values(ascending=True)
-    ll_order = ['ll_'+str(i) for i in range(len(ll_values))]
-    ll['k_order'] = ll[indicator].map(dict(zip(ll_values, ll_order)))
+    ll = ll.loc[ll.k >= 0, :]
+    k_order_ll = ll.reindex(columns=['k'] + list(aggregation_dict.keys())) \
+        .groupby('k').agg(aggregation_dict).reset_index().sort_values(by=indicator, ascending=True)
+    ll_label = [i for i in k_order_ll.k]
+    ll_order = ['ll_'+str(i) for i in range(len(k_order_ll['k']))]
+    ll['k_order'] = ll['k'].map(dict(zip(ll_label, ll_order)))
 
     quadrants = hh.append(ll)
 
