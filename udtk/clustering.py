@@ -100,6 +100,32 @@ def cluster_labels(eps, min_samples, quadrant_array):
     return clustering_quadrant.labels_
 
 
+def get_dbscan(gdf, distance, nbours):
+    '''
+    This function returns the DBSCAN computed cluster label for high-high & low-low
+    quadrants.
+    ...
+    gdf(geodataframe): fgd with a 'lisa_cluster' label that indicates the quadrant of each grid.
+    distance(float): the amount of kms per radian. Ej:0.5 represents a radius of 500mts.
+    nbours(int): the amount of neighbours to be computed in min_samples parameter.
+
+    '''
+
+    # high-high & low-low quadrants
+    quadrants = gdf.loc[(gdf['lisa_cluster'] == 'HH') | (gdf['lisa_cluster'] == 'LL')]
+    # gdf coordinates
+    list_q = list(quadrants.centroid.map(lambda g: [g.x, g.y]))
+
+    kms_per_radian = 6371.0088
+    eps_val = distance / kms_per_radian
+
+    clustering_quadrant = DBSCAN(eps=eps_val, min_samples=nbours).fit(list_q)
+
+    labels = clustering_quadrant.labels_
+
+    return labels
+
+
 def make_convex_cluster(geodt, grid_id, nbour):
     '''
     This function takes a geopandas GeoDataFrame
